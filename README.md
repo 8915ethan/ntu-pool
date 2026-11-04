@@ -4,6 +4,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-pool.8915ethan.workers.dev-0d6efd?style=for-the-badge&logo=cloudflare)](https://pool.8915ethan.workers.dev/)
 [![CI](https://github.com/8915ethan/ntu-pool/actions/workflows/ci.yml/badge.svg)](https://github.com/8915ethan/ntu-pool/actions/workflows/ci.yml)
+[![AI-Assisted](https://img.shields.io/badge/AI--Assisted-Pair%20Programming-blueviolet?style=flat-square&logo=openai)](https://github.com/8915ethan/ntu-pool)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vitest](https://img.shields.io/badge/Vitest-3.0-FCC72B?logo=vitest&logoColor=black)](https://vitest.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -36,12 +37,13 @@
 
 ## 👤 個人角色與參與範圍
 
-- **角色**：獨立開發者（個人專案，從 0 到 1 獨立完成）
-- **參與範疇**：
-  - **領域建模**：實地勘查泳池規格，推導「7 水道物理容量模型」。
-  - **演算法研發**：設計「3:2:1 時序差分加權演算法」與「開館 Baseline 淨人數校正」。
+- **角色**：獨立開發者（人機協同開發）
+- **🤖 AI 協作標記**：本專案採用 **AI 結對協作（AI Pair Programming）** 模式完成。由開發者主導問題定義、7 水道物理容量建模、時序預測架構設計與邊界防禦規劃，並與 AI 協同進行 TypeScript 模組實作、單元測試覆蓋與 CI/CD 自動化工作流調校。
+- **負責範疇**：
+  - **領域建模**：實地勘查 50m 標準池與水道配置，推導「7 水道容量基準（33 / 42 人）」。
+  - **演算法研發**：設計「3:2:1 時序加權差分」與「開館 Baseline 淨人數校正」機制。
   - **全端實作**：以 TypeScript 撰寫容錯 HTML 爬蟲、狀態評估邏輯，並使用 Chart.js 構建前端視覺化。
-  - **工程品質**：Vitest 自動化測試套件覆蓋率防護、GitHub Actions CI/CD Pipeline。
+  - **工程品質**：Vitest 自動化單元測試防護、GitHub Actions CI/CD Pipeline。
   - **雲端部署**：Cloudflare Workers Serverless 邊緣架構部署。
 
 ---
@@ -52,10 +54,10 @@
 | :--- | :--- | :--- |
 | **🏊 7 水道物理容量模型** | 快適 **33 人** / 擁擠 **42 人** | 拒絕憑空猜測，依 5 快速長泳道 + 2 慢速道 + 更衣緩衝區推導出承載上限。 |
 | **🔮 3:2:1 時序加權差分** | 提取過去 15 分鐘加速度向量 | 越靠近當下權重越高，推估未來 20 分鐘抵達人數，動態偏移燈號門檻。 |
-| **🎯 開館 Baseline 自動校正** | 抓取開館前 10 分鐘首筆採樣 | 自動濾除救生員與常駐教練底數，還原水下真實「淨泳客」體感。 |
-| **⏱️ 營業時段時區守衛** | Asia/Taipei 時區運算 | 精準判定平日 07:30~21:30 及週末時段，非營業時間休眠爬蟲，節省邊緣運算資源。 |
+| **🎯 開館 Baseline 自動校正** | 開館準備期提前採樣 | 自動濾除救生員與常駐工作人員底數，還原水下真實「淨泳客」體感。 |
+| **⏱️ 營業時段智慧守衛** | Asia/Taipei 時區運算 | 精準依平日 08:00~21:30 與週末時段管控，圖表自開館起跑，節省邊緣運算。 |
 
-> 📖 **詳細數學推導與情境演繹**：[docs/predictive-crowd-offset.md](docs/predictive-crowd-offset.md)
+> 📖 **詳細數學推導與完整情境演繹**：[docs/predictive-crowd-offset.md](docs/predictive-crowd-offset.md)
 
 ---
 
@@ -87,25 +89,20 @@ flowchart TD
 
 ---
 
-## 💡 最想讓面試官看的部分（技術亮點與工程思維）
+## 💡 技術亮點與工程思維
 
-### 1. 物理容量建模：從場域限制推導臨界點
-許多專案使用固定或憑感覺設定的百分比，本專案依現場標準 50m 池進行物理推導：
-- **舒適狀態（33 人）**：
-  - 5 條快速長泳道：每道 3 人長泳不碰腳（$5 \times 3 = 15$ 人）
-  - 2 條慢速練習道：每道 4 人（$2 \times 4 = 8$ 人）
-  - 男女更衣淋浴緩衝區：約各 5 人（$5 \times 2 = 10$ 人）
-  - 合計：$15 + 8 + 10 = 33$ 人
-- **擁擠警戒（42 人）**：
-  - 快速道達 4 人上限（$20$ 人）+ 慢速道 5 人（$10$ 人）+ 更衣區各 6 人（$12$ 人）= **42 人**。
+### 1. 領域物理建模（Domain Modeling）
+不採用憑感覺設定的固定百分比，而是依現場標準 50m 池的物理空間承載上限推導：
+- **快適門檻（33 人）**：5 條快速長泳道（每道 3 人長泳不碰腳，共 15 人）+ 2 條慢速道（每道 4 人，共 8 人）+ 男女更衣淋浴緩衝區（各 5 人，共 10 人）= **33 人**。
+- **擁擠警戒（42 人）**：快速道達 4 人飽和上限（20 人）+ 慢速道 5 人（10 人）+ 更衣緩衝區各 6 人（12 人）= **42 人**。
 
-### 2. 時序差分衰減演算法（3:2:1 Predictive Offset）
-為了消弭通勤 20 分鐘落差，演算法採樣 4 個時序點（$T-15, T-10, T-5, T$），賦予時間線性衰減權重：
+### 2. 時序差分預警（3:2:1 Predictive Offset）
+為消弭出發至入池的 15~20 分鐘通勤落差，系統採集近 15 分鐘連續 4 個時序點（$T-15, T-10, T-5, T$），賦予線性時間衰減權重：
+- **加權斜率預測**：賦予 $3 : 2 : 1$ 權重提取短期加速度向量，急湧時動態下修門檻（提早亮黃/紅燈預警），散場退潮時適度放寬。
+- **阻尼調節與邊界保護**：引入 0.5 阻尼係數防止外推發散，並限制門檻偏移於 $[-8, +8]$ 人區間，避免單一團體入場產生突波噪訊誤判。
 
-$$\Delta_{5\text{m}} = \frac{3 \times \Delta(T, T-5) + 2 \times \Delta(T-5, T-10) + 1 \times \Delta(T-10, T-15)}{6}$$
-
-- **防突波噪訊**：不單押最近一筆資料，避免單一小團體同時入場引發系統過度震盪。
-- **阻尼係數與邊界保護（Clamping）**：乘上 0.5 阻尼係數防止外推發散，並限制門檻偏移量於 $[-8, +8]$ 人之間。
+### 3. 開館 Baseline 自動校正
+開館前 30 分鐘（平日 07:30 / 週末 08:30）啟動爬蟲採集首批底數，濾除在場就緒的救生員與早班清潔人員，確保看板呈現的是水下真正的「淨泳客」體驗數。
 
 ---
 
