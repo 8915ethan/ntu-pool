@@ -59,7 +59,7 @@ flowchart TD
     end
 
     subgraph Frontend["用戶端決策介面"]
-        Threshold --> API["📦 JSON API (/api/data & /api/health)"]
+        Threshold --> API["📦 JSON API (/api/data)"]
         API --> Dashboard["📱 即時人數與燈號看板"]
         API --> Chart["📈 Chart.js 時序走勢圖"]
     end
@@ -86,24 +86,6 @@ flowchart TD
 * **[Lynxight](https://www.lynxight.com/)**：全球頂尖的 AI 水下視覺即時分析系統，透過現有泳池攝影機結合深度學習，提供 AI 救生防溺預警與泳道密度深度分析。
 
 > 💡 **專案未來演進**：本系統未來可進一步對接中央氣象署天氣 API 提高預測準度；長期若能與專業場館系統（如煊恩或 Lynxight）整合，將能把「大門刷卡總人數」進一步細緻化至「各泳道水下即時密度」，打造全方位的智慧分流看板。
-
----
-
-## 💻 快速開始 (Quick Start)
-
-```bash
-# 1. 複製專案並安裝相依套件
-git clone https://github.com/8915ethan/ntu-pool.git
-cd ntu-pool
-npm install
-
-# 2. 執行全套型別檢查與自動化單元測試
-npm run check
-
-# 3. 本機啟動前端看板
-npx serve .
-# 開啟瀏覽器訪問 http://localhost:3000
-```
 
 ---
 
