@@ -13,10 +13,51 @@ export const CAPACITY_LIMITS = {
 } as const;
 
 /**
- * 轉換日期至 Asia/Taipei 時區
+ * 取得 Asia/Taipei 時區的時間細節（避免時區重複偏移）
+ */
+export function getTaipeiTimeParts(date: Date = new Date()) {
+  const dateStr = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Taipei',
+  }).format(date); // 'YYYY-MM-DD'
+
+  const fullTimeStr = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Taipei',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).format(date); // 'HH:mm:ss'
+
+  const [hourStr, minStr] = fullTimeStr.split(':');
+  const hour = parseInt(hourStr, 10);
+  const min = parseInt(minStr, 10);
+
+  const weekdayStr = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Taipei',
+    weekday: 'short',
+  }).format(date);
+  const weekdayMap: Record<string, number> = {
+    Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+  };
+  const day = weekdayMap[weekdayStr] ?? 0;
+
+  return {
+    dateStr,
+    timeStr: `${hourStr}:${minStr}`,
+    fullTimeStr,
+    hour,
+    min,
+    day,
+    timeValue: hour * 60 + min,
+  };
+}
+
+/**
+ * 轉換日期至 Asia/Taipei 時區 (冪等性保護)
  */
 export function getTaipeiDate(baseDate: Date = new Date()): Date {
-  return new Date(baseDate.toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+  const { dateStr, fullTimeStr } = getTaipeiTimeParts(baseDate);
+  return new Date(`${dateStr}T${fullTimeStr}+08:00`);
 }
 
 /**
@@ -26,11 +67,7 @@ export function getTaipeiDate(baseDate: Date = new Date()): Date {
  * - 週日: 08:30 - 17:30
  */
 export function isOperatingHours(date: Date = new Date()): boolean {
-  const tpeDate = getTaipeiDate(date);
-  const day = tpeDate.getDay();
-  const hour = tpeDate.getHours();
-  const min = tpeDate.getMinutes();
-  const timeValue = hour * 60 + min;
+  const { day, timeValue } = getTaipeiTimeParts(date);
 
   if (day >= 1 && day <= 5 && timeValue >= 450 && timeValue <= 1290) return true;
   if (day === 6 && timeValue >= 510 && timeValue <= 1290) return true;

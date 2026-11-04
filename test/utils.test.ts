@@ -4,6 +4,7 @@ import {
   calculateTrend,
   CAPACITY_LIMITS,
   evaluateThresholdStatus,
+  getTaipeiDate,
   isOperatingHours,
 } from '../src/utils';
 
@@ -43,6 +44,17 @@ describe('7-Lane Capacity & Predictive Algorithm', () => {
     it('should close at night on Wednesday at 22:30 (Asia/Taipei)', () => {
       const d = new Date('2026-11-04T22:30:00+08:00');
       expect(isOperatingHours(d)).toBe(false);
+    });
+
+    it('should be closed at midnight 00:05 (weekday after midnight)', () => {
+      const d = new Date('2026-11-05T00:05:00+08:00');
+      expect(isOperatingHours(d)).toBe(false);
+    });
+
+    it('should be idempotent and closed when passing already converted getTaipeiDate', () => {
+      const d = new Date('2026-11-05T00:05:00+08:00');
+      const tpeDate = getTaipeiDate(d);
+      expect(isOperatingHours(tpeDate)).toBe(false);
     });
   });
 
