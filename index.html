@@ -244,8 +244,10 @@ function renderDashboard() {
 
 function updateChart(todayPoints) {
   const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
-  const labels = todayPoints.map(p => p.time);
-  const data = todayPoints.map(p => Math.max(0, p.value - todayBaseline));
+  // 網頁圖表只從實際開館時間 08:00 開始顯示
+  const displayPoints = todayPoints.filter(p => p.time >= '08:00');
+  const labels = displayPoints.map(p => p.time);
+  const data = displayPoints.map(p => Math.max(0, p.value - todayBaseline));
 
   const datasets = [
     {

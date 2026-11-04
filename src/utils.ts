@@ -61,12 +61,24 @@ export function getTaipeiDate(baseDate: Date = new Date()): Date {
 }
 
 /**
- * 台大體育館營業時間檢查 (依據台北時區)
- * - 平日 (週一至五): 07:30 - 21:30
- * - 週六: 08:30 - 21:30
- * - 週日: 08:30 - 17:30
+ * 台大體育館溫水游泳池實際對外開放時間 (清場為閉館前 30 分鐘)
+ * - 平日 (週一至五): 08:00 - 21:30 (480 ~ 1290)
+ * - 週六: 09:00 - 21:30 (540 ~ 1290)
+ * - 週日: 09:00 - 17:30 (540 ~ 1050)
  */
 export function isOperatingHours(date: Date = new Date()): boolean {
+  const { day, timeValue } = getTaipeiTimeParts(date);
+
+  if (day >= 1 && day <= 5 && timeValue >= 480 && timeValue <= 1290) return true;
+  if (day === 6 && timeValue >= 540 && timeValue <= 1290) return true;
+  if (day === 0 && timeValue >= 540 && timeValue <= 1050) return true;
+  return false;
+}
+
+/**
+ * 爬蟲工作時段判定 (提早 30 分鐘從 07:30 / 08:30 開始抓取救生員與工作人員 Baseline)
+ */
+export function isCrawlerActiveHours(date: Date = new Date()): boolean {
   const { day, timeValue } = getTaipeiTimeParts(date);
 
   if (day >= 1 && day <= 5 && timeValue >= 450 && timeValue <= 1290) return true;
@@ -160,7 +172,7 @@ export function generateMockHistory(
     const currentPointDayOfWeek = d.getDay();
     const currentPointDayStr = DAY_LABELS[currentPointDayOfWeek];
 
-    const pOpenMin = currentPointDayOfWeek === 0 || currentPointDayOfWeek === 6 ? 540 : 480;
+    const pOpenMin = currentPointDayOfWeek === 0 || currentPointDayOfWeek === 6 ? 510 : 450;
     const pCloseMin = currentPointDayOfWeek === 0 ? 1050 : 1290;
 
     for (let tVal = pOpenMin; tVal < pCloseMin; tVal += 5) {

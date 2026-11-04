@@ -5,6 +5,7 @@ import {
   CAPACITY_LIMITS,
   evaluateThresholdStatus,
   getTaipeiDate,
+  isCrawlerActiveHours,
   isOperatingHours,
 } from '../src/utils';
 
@@ -38,6 +39,17 @@ describe('7-Lane Capacity & Predictive Algorithm', () => {
   describe('isOperatingHours', () => {
     it('should open on Wednesday at 14:00 (Asia/Taipei)', () => {
       const d = new Date('2026-11-04T14:00:00+08:00');
+      expect(isOperatingHours(d)).toBe(true);
+    });
+
+    it('should be closed to public on Wednesday at 07:45 (before 08:00 opening)', () => {
+      const d = new Date('2026-11-04T07:45:00+08:00');
+      expect(isOperatingHours(d)).toBe(false);
+      expect(isCrawlerActiveHours(d)).toBe(true);
+    });
+
+    it('should be open on Wednesday at 08:00 (official public opening)', () => {
+      const d = new Date('2026-11-04T08:00:00+08:00');
       expect(isOperatingHours(d)).toBe(true);
     });
 
