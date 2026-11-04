@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>台大泳池 人流決策看板 (Showcase Demo)</title>
+<title>NTU PoolFlow 未游先知 · 台大泳池人流即時看板</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -226,7 +226,7 @@ function renderDashboard() {
   const redThreshold = BASE_CROWDED + offset;
 
   if (netCount >= redThreshold) {
-    lightTextEl.innerHTML = "人潮擁擠<br>請稍後";
+    lightTextEl.innerHTML = "人潮擁擠<br>請稍候";
     lightEl.className = "status-light-box light-red";
   } else if (netCount >= amberThreshold) {
     lightTextEl.innerHTML = "人數中等<br>可入場";
