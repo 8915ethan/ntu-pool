@@ -1,0 +1,34 @@
+{
+  "name": "ntu-pool-showcase",
+  "version": "1.0.0",
+  "description": "NTU Swimming Pool real-time flow monitoring, 7-lane physical capacity modeling, and predictive crowd offset showcase.",
+  "main": "src/utils.ts",
+  "scripts": {
+    "test": "vitest",
+    "test:run": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run test:run",
+    "crawl:demo": "npx tsx src/crawler.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/8915ethan/ntu-pool.git"
+  },
+  "keywords": [
+    "data-visualization",
+    "chartjs",
+    "time-series",
+    "capacity-model",
+    "predictive-algorithm",
+    "ntu",
+    "swimming-pool"
+  ],
+  "author": "8915ethan",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.5.2",
+    "vitest": "~3.0.7",
+    "tsx": "^4.19.0",
+    "@types/node": "^20.14.9"
+  }
+}
