@@ -82,15 +82,3 @@ npx serve .
 # 4. 單次執行示範爬蟲
 npm run crawl:demo
 ```
-
----
-
-## 📄 授權條款 (License)
-
-本專案採用 [MIT License](LICENSE) 授權。
-
----
-
-## 📄 授權條款 (License)
-
-本專案採用 [MIT License](LICENSE) 條款開放原始碼。
