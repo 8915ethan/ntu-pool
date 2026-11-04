@@ -43,25 +43,35 @@
 
 ```mermaid
 flowchart TD
-    subgraph External["外部資料源"]
-        NTU["🏛️ 台大體育館官方即時網頁"]
+    subgraph External["外部資料來源"]
+        NTU["🏛️ 台大體育館官方即時網頁 (rent.pe.ntu.edu.tw)"]
     end
 
-    subgraph Backend["Cloudflare Workers (Edge Serverless)"]
-        Cron["⏱️ 定時觸發排程 (Cron Trigger)"] --> Crawler["🕷️ 爬蟲核心 (Regex 容錯解析)"]
-        NTU -. 抓取即時 HTML .-> Crawler
-        Crawler --> Baseline["🎯 開館 Baseline 扣除 (救生員校正)"]
-        Baseline --> Storage[("💾 Cloudflare KV 資料儲存")]
+    subgraph CrawlerEngine["邊緣爬蟲引擎 (Cloudflare Worker Cron)"]
+        Cron["⏱️ 定時觸發器 (每 5 分鐘一次)"] --> Guard{"⏱️ 營業時段守衛 (台北時間)"}
+        Guard -->|營業時段內| Fetcher["🌐 非同步 HTTP 擷取"]
+        NTU -. 抓取 HTML 頁面 .-> Fetcher
+        Fetcher --> Regex["🕷️ Regex 容錯解析現場人數"]
+        Regex --> Baseline["🎯 開館 Baseline 扣除 (救生員校正)"]
+        Baseline --> Sanitizer["🧹 清洗非營業時間資料"]
+        Sanitizer --> KV[("💾 Cloudflare KV : ntu_pool")]
+    end
+
+    subgraph ServiceEngine["邊緣 API 與決策引擎 (Cloudflare Worker Fetch)"]
+        KV --> Window["⚡ 滑動視窗截取 14 天活躍時序 (-93% Payload)"]
+        Window --> Algo["🔮 3:2:1 動態時序差分預測演算法"]
+        Algo --> Threshold["🚦 紅黃綠動態門檻 (Traffic Light)"]
+        Threshold --> Routes{"🔀 邊緣路由分流 (src/index.ts)"}
         
-        Storage --> Buffer["時序滑動視窗 (Sliding Window -93% Payload)"]
-        Buffer --> Algorithm["🔮 動態時序差分預測演算法"]
-        Algorithm --> Threshold["🚦 紅黃綠動態門檻 (Traffic Light)"]
+        Routes -->|GET /| Dashboard["🖥️ 互動式視覺化儀表板 (HTML + Chart.js)"]
+        Routes -->|GET /api/data| API["📦 即時淨人數、趨勢與時序 JSON"]
+        Routes -->|GET /manifest.json| PWA["📱 PWA Web App Manifest"]
     end
 
-    subgraph Frontend["用戶端決策介面"]
-        Threshold --> API["📦 JSON API (/api/data)"]
-        API --> Dashboard["📱 即時人數與燈號看板"]
-        API --> Chart["📈 Chart.js 時序走勢圖"]
+    subgraph Clients["使用者與客戶端"]
+        Dashboard --> Users["👥 泳客行動裝置 / 電腦瀏覽器"]
+        API --> Users
+        PWA --> Users
     end
 ```
 
