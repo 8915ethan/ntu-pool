@@ -1,6 +1,6 @@
 # 🏊 NTU PoolFlow · 台大泳池人流即時監控與智慧預測系統
 
-> **一句話簡介**：消弭「通勤出發到入池的時間落差」，基於 **7 水道物理容量建模**、**3:2:1 時序差分預測** 與 **Cloudflare Workers 邊緣運算** 的台大泳池智慧決策看板。
+> **一句話簡介**：針對官方網站「只有單一時間點、缺乏預測性」的痛點，結合 **Cloudflare 邊緣爬蟲**、**動態時序預測演算法** 與 **紅黃綠動態燈號（Traffic Light）**，提供泳客出發當下最佳前往決策的即時看板。
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-pool.8915ethan.workers.dev-0d6efd?style=for-the-badge&logo=cloudflare)](https://pool.8915ethan.workers.dev/)
 [![CI](https://github.com/8915ethan/ntu-pool/actions/workflows/ci.yml/badge.svg)](https://github.com/8915ethan/ntu-pool/actions/workflows/ci.yml)
@@ -14,7 +14,7 @@
 ## 📸 線上展示 (Live Demo & Preview)
 
 * 🌐 **正式上線網址**：[**https://pool.8915ethan.workers.dev/**](https://pool.8915ethan.workers.dev/)
-* 📱 **介面特色**：RWD 響應式佈局、自動深淺色適應、開館時段自適應圖表，支援切換「真實資料 (BETA)」與「模擬情境 (DEMO)」。
+* 📱 **介面特色**：RWD 響應式佈局、自動深淺色適應、Chart.js 時序走勢圖，支援「真實資料 (BETA)」與「模擬情境 (DEMO)」一鍵切換。
 
 <p align="center">
   <img src="docs/dashboard-preview.jpg" alt="NTU PoolFlow Dashboard Preview" width="500" />
@@ -24,53 +24,68 @@
 
 ## 🎯 核心痛點與解決方案 (The Problem & Solution)
 
-* **傳統盲點（通勤準備延遲 Transit Delay）**：泳客出發前看到現場舒適（如 30 人綠燈），經 15~20 分鐘通勤更衣抵達後，現場正逢急湧已暴增至 45 人（轉為擁擠紅燈），造成決策落差。
-* **智慧解法**：不只呈現當下靜態數值，而是引入**短期時序斜率加權預測**，在急湧時**提前下修紅黃警戒門檻（提早預警）**，讓泳客「在抵達泳池的那一刻依然舒適」。
+* **傳統盲點**：官方網站**只有單一時間點**的人數數字，使用者無法得知即將變多還是變少，**缺乏可預測性**。泳客常常出發前看到人少，經歷 15~20 分鐘通勤更衣抵達時，現場卻已因人潮湧入而擁擠爆滿。
+* **智慧解法**：除了完整展現**歷史時序資料走勢**，更利用**動態資料即時預測**未來 20 分鐘趨勢，設立不同閾值的**紅黃綠燈號（Traffic Light）**，在人潮急湧時提早亮燈預警，供使用者在當下做出最明智的出行決策。
 
 ---
 
-## ⚡ 四大技術亮點 (Technical Highlights)
+## ⚡ 三大核心特色 (Core Features)
 
-| 技術特色 | 核心機制 | 實際效益 |
+| 核心特色 | 技術實現 | 效益說明 |
 | :--- | :--- | :--- |
-| **🏊 7 水道物理容量模型** | 快適 **33 人** / 擁擠 **42 人** | 拒絕憑空設定，依 5 快速長泳道 + 2 慢速道 + 更衣緩衝區推導出人體工學承載上限。 |
-| **🔮 3:2:1 時序差分預測** | 提取近 15 分鐘加速度向量 | 越靠近當下權重越高，推算未來 20 分鐘趨勢，動態偏移燈號門檻（防突波限幅 $[-8, +8]$）。 |
-| **🎯 開館 Baseline 自動校正** | 開館準備期首筆採樣 | 自動濾除救生員與早班清潔人員常駐底數，忠實還原水下「淨泳客」體驗人數。 |
-| **⚡ 邊緣滑動視窗 (Sliding Window)** | API 截取近 14 天活躍時序 | 解決歷史累積 24,000+ 筆資料膨脹瓶頸，**Payload 傳輸量驟降 93%**，首屏秒開。 |
+| **🌐 Cloudflare 邊緣無伺服器爬蟲** | Cron Trigger + Workers + KV | 每 5 分鐘自動輕量採樣官網，邊緣節點零伺服器維護成本，並自動扣除開館救生員底數。 |
+| **🔮 動態時序差分演算法預測** | 3:2:1 時間加權變化率 | 提取過去 15 分鐘趨勢推算未來動向，人潮湧入時提前調低警戒門檻，避免泳客到場踩雷。 |
+| **🤖 現代化 AI 協同開發實踐** | VS Code + Antigravity + GitHub + Cloudflare | 開發者主導架構與邏輯定義，AI 協同加速型別設計、31 項單元測試覆蓋與自動化 CI/CD 部署。 |
 
 ---
 
 ## 🏗️ 系統架構 (Architecture)
 
 ```mermaid
-flowchart LR
-    NTU["🏛️ 台大官方即時網頁"] -->|5分鐘定時抓取| Worker["⚡ Cloudflare Worker (Edge)"]
-    Worker --> Baseline["🎯 開館 Baseline 扣除"]
-    Worker --> Window["⚡ 滑動窗口 (-93% Payload)"]
-    Baseline --> Algo["🔮 3:2:1 時序差分演算法"]
-    Algo --> Threshold["🚦 7 水道動態警戒門檻"]
-    Threshold --> API["📦 /api/data & /api/health"]
-    API --> UI["📱 輕量化前端看板 (Chart.js / PWA)"]
+flowchart TD
+    subgraph External["外部資料源"]
+        NTU["🏛️ 台大體育館官方即時網頁"]
+    end
+
+    subgraph Backend["Cloudflare Workers (Edge Serverless)"]
+        Cron["⏱️ 定時觸發排程 (Cron Trigger)"] --> Crawler["🕷️ 爬蟲核心 (Regex 容錯解析)"]
+        NTU -. 抓取即時 HTML .-> Crawler
+        Crawler --> Baseline["🎯 開館 Baseline 扣除 (救生員校正)"]
+        Baseline --> Storage[("💾 Cloudflare KV 資料儲存")]
+        
+        Storage --> Buffer["時序滑動視窗 (Sliding Window -93% Payload)"]
+        Buffer --> Algorithm["🔮 動態時序差分預測演算法"]
+        Algorithm --> Threshold["🚦 紅黃綠動態門檻 (Traffic Light)"]
+    end
+
+    subgraph Frontend["用戶端決策介面"]
+        Threshold --> API["📦 JSON API (/api/data & /api/health)"]
+        API --> Dashboard["📱 即時人數與燈號看板"]
+        API --> Chart["📈 Chart.js 時序走勢圖"]
+    end
 ```
 
 ---
 
 ## 📚 深入技術專頁導覽 (Detailed Documentation)
 
-為維持主文件簡潔精煉，完整數學推導、架構決策與邊界防禦細節已獨立收錄於分頁：
+詳細公式推導、架構決策與邊界防禦細節已獨立收錄於分頁：
 
-* 📖 **[深入解析 1：7 水道物理容量建模與 3:2:1 預測數學推導](docs/predictive-crowd-offset.md)**  
-  *詳細推導公式、時間軸視窗分解、阻尼外推抑制機制與 4 種急湧/退潮情境數值驗算。*
+* 📖 **[深入解析 1：動態人潮斜率加權預測演算法與 7 水道門檻推導](docs/predictive-crowd-offset.md)**  
+  *詳細計算公式、時間軸視窗分解、防止過度敏感與極端調整限制機制，以及尖峰急湧與散場情境驗算。*
 * ⚖️ **[深入解析 2：技術決策紀錄與架構權衡 (Decision Log & Trade-offs)](docs/decision-log.md)**  
-  *收錄爬蟲選型（Regex vs. DOM）、差分時序 vs. 機器學習、UTC 跨時區冪等化防禦及未來演進 Roadmap。*
+  *收錄爬蟲選型（Regex vs. DOM）、差分時序 vs. 機器學習、開館救生員底數扣除、UTC 跨時區防護與 API 封包瘦身。*
 
 ---
 
-## 🤖 人機協作標記 (AI Pair Programming)
+## 🌐 相關產品與潛力發展 (Industry Benchmarks & Future Potential)
 
-本專案採用 **AI 結對協作（AI Pair Programming）** 開發模式完成：
-* **開發者主導**：實地勘查 50m 標準水道環境、建立 7 水道空間容量數學模型、定義時序衰減預測架構與產品交互決策。
-* **AI 協同加速**：輔助 TypeScript 嚴格型別定義、邊界測試案例設計（Vitest 31 項測試覆蓋）、邊緣運算效能調優與 CI/CD 工作流配置。
+本專案由個人泳客出發，透過邊緣演算法達成「輕量外部數據感知與人流預測」。在專業運動科技與場館安全領域，已有許多成熟企業發展出高階的智慧水上方案：
+
+* **[煊恩科技 (Xuanen)](https://www.xuanen.com.tw/)**：台灣知名智慧運動場館整合商，專精於泳池水質即時監控、場館人流計數整合與自動化安全控制系統。
+* **[Lynxight](https://www.lynxight.com/)**：全球頂尖的 AI 水下視覺即時分析系統，透過現有泳池攝影機結合深度學習，提供 AI 救生防溺預警與泳道密度深度分析。
+
+> 💡 **專案未來演進**：本系統未來可進一步對接中央氣象署天氣 API 提高預測準度；長期若能與專業場館系統（如煊恩或 Lynxight）整合，將能把「大門刷卡總人數」進一步細緻化至「各泳道水下即時密度」，打造全方位的智慧分流看板。
 
 ---
 
