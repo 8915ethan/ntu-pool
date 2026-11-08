@@ -33,10 +33,10 @@
 
 | 核心特色 | 技術實現 | 效益說明 |
 | :--- | :--- | :--- |
-| **🌐 Cloudflare 邊緣無伺服器爬蟲** | Cron Trigger + Workers + KV | 每 5 分鐘自動輕量採樣官網，邊緣節點零伺服器維護成本，並自動扣除開館救生員底數。 |
+| **🌐 Cloudflare 邊緣無伺服器爬蟲** | Cron Trigger + Workers + KV | 每 5 分鐘自動輕量採樣官網，邊緣節點零伺服器維護成本，實現邊緣節點零伺服器維護成本與高可用性。 |
 | **🔮 動態時序差分演算法預測** | 3:2:1 時間加權變化率 | 提取過去 15 分鐘趨勢推算未來動向，人潮湧入時提前調低警戒門檻，避免泳客到場踩雷。 |
-| **📈 邊緣常態歷史與時段對齊** | 每日獨立 Baseline + 5 分鐘網格插值 | 扣除過去 14 天各日各自的開館底數，濾除全天無效日，平滑內插均線並依星期嚴格鎖定泳池開放時段。 |
-| **🤖 現代化 AI 協同開發實踐** | VS Code + Antigravity + GitHub + Cloudflare | 開發者主導架構與邏輯定義，AI 協同加速型別設計、36 項單元測試覆蓋與自動化 CI/CD 部署。 |
+| **📈 邊緣常態歷史與時段對齊** | 5 分鐘網格線性插值 | 彙整過去 14 天同星期走勢，濾除全天無效日，平滑內插均線並依星期嚴格鎖定泳池開放時段。 |
+| **🤖 現代化 AI 協同開發實踐** | VS Code + Antigravity + GitHub + Cloudflare | 開發者主導架構與邏輯定義，AI 協同加速型別設計、34 項單元測試覆蓋與自動化 CI/CD 部署。 |
 
 ---
 
@@ -53,21 +53,20 @@ flowchart TD
         Guard -->|營業時段內| Fetcher["🌐 非同步 HTTP 擷取"]
         NTU -. 抓取 HTML 頁面 .-> Fetcher
         Fetcher --> Regex["🕷️ Regex 容錯解析現場人數"]
-        Regex --> Baseline["🎯 開館 Baseline 扣除 (救生員校正)"]
-        Baseline --> Sanitizer["🧹 清洗非營業時間資料"]
+        Regex --> Sanitizer["🧹 清洗非營業時間資料"]
         Sanitizer --> KV[("💾 Cloudflare KV : ntu_pool")]
     end
 
     subgraph ServiceEngine["邊緣 API 與決策引擎 (Cloudflare Worker Fetch)"]
         KV --> Window["⚡ 滑動視窗截取 14 天活躍時序 (-93% Payload)"]
-        Window --> TypCalc["📈 14 天常態淨泳客預先聚合 (扣各日底數 + 5分鐘線性插值)"]
+        Window --> TypCalc["📈 14 天常態走勢預先聚合 (5分鐘線性插值)"]
         Window --> Algo["🔮 3:2:1 動態時序差分預測演算法"]
         Algo --> Threshold["🚦 紅黃綠動態門檻 (Traffic Light)"]
         Threshold --> Routes{"🔀 邊緣路由分流 (src/index.ts)"}
         TypCalc --> Routes
         
         Routes -->|GET /| Dashboard["🖥️ 互動式視覺化儀表板 (HTML + Chart.js，預設隱藏 DEMO)"]
-        Routes -->|GET /api/data| API["📦 即時淨人數、趨勢、常態歷史與時序 JSON"]
+        Routes -->|GET /api/data| API["📦 即時人數、趨勢、常態歷史與時序 JSON"]
         Routes -->|GET /manifest.json| PWA["📱 PWA Web App Manifest"]
     end
 
