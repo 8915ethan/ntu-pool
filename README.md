@@ -89,7 +89,7 @@ flowchart TD
 * 📖 **[深入解析 1：加權移動平均人潮預測演算法與 7 水道門檻推導](docs/predictive-crowd-offset.md)**  
   *詳細計算公式、時間軸視窗分解、防止過度敏感與極端調整限制機制，以及尖峰急湧與散場情境驗算。*
 * ⚖️ **[深入解析 2：技術決策紀錄與架構權衡 (Decision Log & Trade-offs)](docs/decision-log.md)**  
-  *收錄爬蟲選型（Regex vs. DOM）、加權移動平均 vs. 機器學習、對齊官方現場人數（不扣除開館工作人員底數）、UTC 跨時區防護與 API 封包瘦身。*
+  *收錄爬蟲選型（Regex vs. DOM）、雙軌加權移動平均 vs. 機器學習、UTC 跨時區防護、API 封包瘦身與常態歷史 5 分鐘網格插值。*
 
 ---
 
