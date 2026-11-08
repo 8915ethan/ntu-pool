@@ -209,19 +209,8 @@ function switchMode(mode) {
 }
 
 async function loadData() {
-  if (currentDisplayMode === 'static') {
-    try {
-      const res = await fetch('./data/history.json');
-      rawHistoryData = await res.json();
-      renderDashboard();
-    } catch {
-      rawHistoryData = generateSampleData();
-      renderDashboard();
-    }
-  } else {
-    rawHistoryData = generateSampleData();
-    renderDashboard();
-  }
+  rawHistoryData = generateSampleData();
+  renderDashboard();
 }
 
 function generateSampleData() {
@@ -236,10 +225,10 @@ function generateSampleData() {
   }
 
   // 今日
-  const times = ['07:35', '08:00', '09:00', '11:00', '12:30', '14:00', '15:30', '16:30', '17:00', '17:15', '17:30'];
+  const times = ['08:00', '09:00', '11:00', '12:30', '14:00', '15:30', '16:30', '17:00', '17:05', '17:10', '17:15'];
   let cur = 10;
   times.forEach((t, idx) => {
-    if (idx === 0) cur = 8; // 開館 baseline
+    if (idx === 0) cur = 12;
     else if (t >= '16:30') cur += Math.floor(Math.random() * 6) + 3; // 尖峰急湧
     else cur += Math.floor(Math.random() * 5) - 2;
     list.push({ date: todayStr, day: dayLabels[now.getDay()], time: t, value: Math.max(0, cur) });
@@ -254,7 +243,7 @@ function renderDashboard() {
   const todayPoints = rawHistoryData.filter(p => p.date === todayStr);
   const latest = todayPoints[todayPoints.length - 1] || { value: 39, time: '17:30' };
 
-  const netCount = latest.value;
+  const currentCount = latest.value;
   const offset = calculatePredictiveOffset(todayPoints);
   const trend = calculateTrend(todayPoints);
 
@@ -263,16 +252,16 @@ function renderDashboard() {
   const lightTextEl = document.getElementById('light-text');
   const trendEl = document.getElementById('trend-icon');
 
-  currCountEl.textContent = netCount;
+  currCountEl.textContent = currentCount;
   trendEl.textContent = trend === '↑' ? '人潮增加中' : trend === '↓' ? '人潮漸散去' : '人潮持平';
 
   const amberThreshold = BASE_COMFORTABLE + offset;
   const redThreshold = BASE_CROWDED + offset;
 
-  if (netCount >= redThreshold) {
+  if (currentCount >= redThreshold) {
     lightTextEl.innerHTML = "人潮擁擠<br>請稍候";
     lightEl.className = "status-light-box light-red";
-  } else if (netCount >= amberThreshold) {
+  } else if (currentCount >= amberThreshold) {
     lightTextEl.innerHTML = "人數中等<br>可入場";
     lightEl.className = "status-light-box light-amber";
   } else {

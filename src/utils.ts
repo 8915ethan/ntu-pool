@@ -278,17 +278,6 @@ export function generateMockHistory(
 }
 
 /**
- * Calculates baseline (staff count) for a given day's points.
- * @deprecated Baseline deduction is no longer used; kept for backward compatibility.
- */
-export function getDayBaseline(
-  dayPoints: PoolHistoryPoint[],
-  dayOfWeek: number
-): { baseline: number; isValid: boolean } {
-  return { baseline: 0, isValid: false };
-}
-
-/**
  * Edge Worker Aggregator:
  * Calculates typical headcount curve for the same day-of-week over the past 4 weeks (28 days).
  * 1. Excludes current day and non-operational days (where max headcount <= 0).

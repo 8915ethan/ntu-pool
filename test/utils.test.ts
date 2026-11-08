@@ -6,7 +6,6 @@ import {
   DAY_LABELS,
   generateMockHistory,
   getActiveWindowHistory,
-  getDayBaseline,
   getTaipeiDate,
   getTaipeiTimeParts,
   isCrawlerActiveHours,
@@ -283,7 +282,7 @@ describe('Utils', () => {
     it('should strictly bound typical curve to public opening hours for each day of week', () => {
       // Sunday (0): 09:00 to 17:30
       const sunHistory = [
-        { date: '2026-11-01', day: '週日', time: '08:30', value: 1 }, // baseline
+        { date: '2026-11-01', day: '週日', time: '08:30', value: 1 },
         { date: '2026-11-01', day: '週日', time: '12:00', value: 20 },
       ];
       const sunTypical = calculateNetTypicalHistory(sunHistory, 0, '2026-11-08', 14);
@@ -292,7 +291,7 @@ describe('Utils', () => {
 
       // Saturday (6): 09:00 to 21:30
       const satHistory = [
-        { date: '2026-10-31', day: '週六', time: '08:30', value: 2 }, // baseline
+        { date: '2026-10-31', day: '週六', time: '08:30', value: 2 },
         { date: '2026-10-31', day: '週六', time: '12:00', value: 25 },
       ];
       const satTypical = calculateNetTypicalHistory(satHistory, 6, '2026-11-07', 14);
@@ -301,7 +300,7 @@ describe('Utils', () => {
 
       // Weekday Wednesday (3): 08:00 to 21:30
       const wedHistory = [
-        { date: '2026-10-28', day: '週三', time: '07:30', value: 3 }, // baseline
+        { date: '2026-10-28', day: '週三', time: '07:30', value: 3 },
         { date: '2026-10-28', day: '週三', time: '12:00', value: 30 },
       ];
       const wedTypical = calculateNetTypicalHistory(wedHistory, 3, '2026-11-04', 14);
