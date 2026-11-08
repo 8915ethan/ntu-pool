@@ -29,13 +29,14 @@
 
 ---
 
-## ⚡ 三大核心特色 (Core Features)
+## ⚡ 四大核心特色 (Core Features)
 
 | 核心特色 | 技術實現 | 效益說明 |
 | :--- | :--- | :--- |
 | **🌐 Cloudflare 邊緣無伺服器爬蟲** | Cron Trigger + Workers + KV | 每 5 分鐘自動輕量採樣官網，邊緣節點零伺服器維護成本，並自動扣除開館救生員底數。 |
 | **🔮 動態時序差分演算法預測** | 3:2:1 時間加權變化率 | 提取過去 15 分鐘趨勢推算未來動向，人潮湧入時提前調低警戒門檻，避免泳客到場踩雷。 |
-| **🤖 現代化 AI 協同開發實踐** | VS Code + Antigravity + GitHub + Cloudflare | 開發者主導架構與邏輯定義，AI 協同加速型別設計、31 項單元測試覆蓋與自動化 CI/CD 部署。 |
+| **📈 邊緣常態歷史與時段對齊** | 每日獨立 Baseline + 5 分鐘網格插值 | 扣除過去 14 天各日各自的開館底數，濾除全天無效日，平滑內插均線並嚴格鎖定泳池開放時段（週一~五 08:00~21:30、週六 09:00~21:30、週日 09:00~17:30）。 |
+| **🤖 現代化 AI 協同開發實踐** | VS Code + Antigravity + GitHub + Cloudflare | 開發者主導架構與邏輯定義，AI 協同加速型別設計、36 項單元測試覆蓋與自動化 CI/CD 部署。 |
 
 ---
 
@@ -59,12 +60,14 @@ flowchart TD
 
     subgraph ServiceEngine["邊緣 API 與決策引擎 (Cloudflare Worker Fetch)"]
         KV --> Window["⚡ 滑動視窗截取 14 天活躍時序 (-93% Payload)"]
+        Window --> TypCalc["📈 14 天常態淨泳客預先聚合 (扣各日底數 + 5分鐘線性插值)"]
         Window --> Algo["🔮 3:2:1 動態時序差分預測演算法"]
         Algo --> Threshold["🚦 紅黃綠動態門檻 (Traffic Light)"]
         Threshold --> Routes{"🔀 邊緣路由分流 (src/index.ts)"}
+        TypCalc --> Routes
         
-        Routes -->|GET /| Dashboard["🖥️ 互動式視覺化儀表板 (HTML + Chart.js)"]
-        Routes -->|GET /api/data| API["📦 即時淨人數、趨勢與時序 JSON"]
+        Routes -->|GET /| Dashboard["🖥️ 互動式視覺化儀表板 (HTML + Chart.js，預設隱藏 DEMO)"]
+        Routes -->|GET /api/data| API["📦 即時淨人數、趨勢、常態歷史與時序 JSON"]
         Routes -->|GET /manifest.json| PWA["📱 PWA Web App Manifest"]
     end
 
