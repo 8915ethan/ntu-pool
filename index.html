@@ -121,7 +121,7 @@ let currentDisplayMode = 'static';
 const BASE_COMFORTABLE = 33;
 const BASE_CROWDED = 42;
 
-function calculatePredictiveOffset(todayPoints) {
+function calculatePredictiveOffset(todayPoints, typicalHistory) {
   const len = todayPoints.length;
   if (len < 4) return 0;
 
@@ -155,7 +155,29 @@ function calculatePredictiveOffset(todayPoints) {
   if (weightTotal === 0 || validIntervalCount === 0) return 0;
 
   const weightedRatePerMin = weightedRateSum / weightTotal;
-  const predictedChange15m = weightedRatePerMin * 15;
+  const wmaChange15m = weightedRatePerMin * 15;
+
+  // 步驟 2.5：融合 75% 短期 WMA + 25% 常態歷史均線斜率
+  let predictedChange15m = wmaChange15m;
+  if (typicalHistory && typicalHistory.length > 0) {
+    const currMin = parseMinutes(p0.time);
+    const futureMin = currMin + 15;
+    let typNow = undefined;
+    let typFuture = undefined;
+
+    for (const pt of typicalHistory) {
+      const ptMin = parseMinutes(pt.time);
+      const val = pt.avg !== undefined ? pt.avg : pt.netAvg;
+      if (val === undefined) continue;
+      if (Math.abs(ptMin - currMin) <= 2) typNow = val;
+      if (Math.abs(ptMin - futureMin) <= 2) typFuture = val;
+    }
+
+    if (typNow !== undefined && typFuture !== undefined) {
+      const typicalChange15m = typFuture - typNow;
+      predictedChange15m = 0.75 * wmaChange15m + 0.25 * typicalChange15m;
+    }
+  }
 
   const isFullConfidence = validIntervalCount === 3;
   const damping = isFullConfidence ? 0.7 : 0.5;

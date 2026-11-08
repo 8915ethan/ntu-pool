@@ -70,7 +70,7 @@ export function isOperatingHours(date: Date = new Date()): boolean {
 
 /**
  * Checks if the crawler should collect data.
- * Starts 30 minutes before official opening (07:30 weekdays, 08:30 weekends) to capture baseline staff count.
+ * Starts 30 minutes before official opening (07:30 weekdays, 08:30 weekends) as pre-opening warm-up buffer.
  * - Mon - Fri: 07:30 - 21:30 (450 to 1290 minutes)
  * - Sat: 08:30 - 21:30 (510 to 1290 minutes)
  * - Sun: 08:30 - 17:30 (510 to 1050 minutes)
@@ -85,7 +85,7 @@ export function isCrawlerActiveHours(date: Date = new Date()): boolean {
 }
 
 /**
- * Checks if a specific history point falls within data retention hours (includes baseline preparation).
+ * Checks if a specific history point falls within data retention hours.
  */
 export function isPointInOperatingHours(point: { day?: string; date?: string; time: string }): boolean {
   if (!point || !point.time) return false;
@@ -103,15 +103,15 @@ export function isPointInOperatingHours(point: { day?: string; date?: string; ti
     dayOfWeek = new Date(`${point.date}T12:00:00+08:00`).getDay();
   }
 
-  // Weekday (Mon-Fri): Keep 07:30 - 21:30 (includes 07:30 baseline)
+  // Weekday (Mon-Fri): Keep 07:30 - 21:30
   if (dayOfWeek >= 1 && dayOfWeek <= 5) {
     return timeValue >= 450 && timeValue <= 1290;
   }
-  // Saturday: Keep 08:30 - 21:30 (includes 08:30 baseline)
+  // Saturday: Keep 08:30 - 21:30
   if (dayOfWeek === 6) {
     return timeValue >= 510 && timeValue <= 1290;
   }
-  // Sunday: Keep 08:30 - 17:30 (includes 08:30 baseline)
+  // Sunday: Keep 08:30 - 17:30
   if (dayOfWeek === 0) {
     return timeValue >= 510 && timeValue <= 1050;
   }
@@ -151,10 +151,15 @@ export function calculateTrend(todayPoints: PoolHistoryPoint[]): '↑' | '↓' |
 }
 
 /**
- * Calculates predictive dynamic offset based on linear weighted moving average (LWMA) of recent rates.
- * Normalizes rates by actual time delta (dt) and projects 15-minute transit arrival change.
+ * Calculates predictive dynamic offset based on a hybrid model:
+ * - 75% Short-term Linear Weighted Moving Average (3:2:1 LWMA of recent 15m rates)
+ * - 25% Historical Typical Curve Slope (15m ahead delta from 4-week same-day-of-week typicalHistory)
+ * Falls back gracefully to 100% LWMA when typicalHistory is unavailable.
  */
-export function calculatePredictiveOffset(todayPoints: PoolHistoryPoint[]): number {
+export function calculatePredictiveOffset(
+  todayPoints: PoolHistoryPoint[],
+  typicalHistory?: { time: string; avg?: number; netAvg?: number }[]
+): number {
   const len = todayPoints.length;
   if (len < 4) return 0;
 
@@ -189,7 +194,29 @@ export function calculatePredictiveOffset(todayPoints: PoolHistoryPoint[]): numb
   if (weightTotal === 0 || validIntervalCount === 0) return 0;
 
   const weightedRatePerMin = weightedRateSum / weightTotal;
-  const predictedChange15m = weightedRatePerMin * 15;
+  const wmaChange15m = weightedRatePerMin * 15;
+
+  // 步驟 2.5：融合 75% 短期 WMA + 25% 常態歷史均線斜率 (Typical Curve 15m Slope)
+  let predictedChange15m = wmaChange15m;
+  if (typicalHistory && typicalHistory.length > 0) {
+    const currMin = parseMinutes(p0.time);
+    const futureMin = currMin + 15;
+    let typNow: number | undefined;
+    let typFuture: number | undefined;
+
+    for (const pt of typicalHistory) {
+      const ptMin = parseMinutes(pt.time);
+      const val = pt.avg ?? pt.netAvg;
+      if (val === undefined) continue;
+      if (Math.abs(ptMin - currMin) <= 2) typNow = val;
+      if (Math.abs(ptMin - futureMin) <= 2) typFuture = val;
+    }
+
+    if (typNow !== undefined && typFuture !== undefined) {
+      const typicalChange15m = typFuture - typNow;
+      predictedChange15m = 0.75 * wmaChange15m + 0.25 * typicalChange15m;
+    }
+  }
 
   // 自適應抗噪防護：3 段完整時信任度高 (0.7 / ±8)；過渡期 1~2 段時保守防護 (0.5 / ±4)
   const isFullConfidence = validIntervalCount === 3;

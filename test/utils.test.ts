@@ -179,6 +179,25 @@ describe('Utils', () => {
       // 只有 1 個有效區間 (10:00->10:05)，觸發保守模式 clampLimit = 4
       expect(offset).toBe(-4);
     });
+
+    it('should blend 75% short-term WMA with 25% typical history 15m slope when typicalHistory is provided', () => {
+      // Short-term WMA: 17:00->17:05 (+2), 17:05->17:10 (+2), 17:10->17:15 (+2) => wmaChange15m = +6
+      const todayPoints = [
+        { date: '2026-11-04', day: '週三', time: '17:00', value: 28 },
+        { date: '2026-11-04', day: '週三', time: '17:05', value: 30 },
+        { date: '2026-11-04', day: '週三', time: '17:10', value: 32 },
+        { date: '2026-11-04', day: '週三', time: '17:15', value: 34 },
+      ];
+      // Typical history at 17:15 -> 17:30 jumps from 26 to 40 (typicalChange15m = +14)
+      const typicalHistory = [
+        { time: '17:15', avg: 26, netAvg: 26 },
+        { time: '17:30', avg: 40, netAvg: 40 },
+      ];
+      // Hybrid = 0.75 * 6 + 0.25 * 14 = 4.5 + 3.5 = +8.0; offset = -round(8.0 * 0.7) = -6
+      // (Without typicalHistory: -round(6 * 0.7) = -4)
+      expect(calculatePredictiveOffset(todayPoints)).toBe(-4);
+      expect(calculatePredictiveOffset(todayPoints, typicalHistory)).toBe(-6);
+    });
   });
 
   describe('getActiveWindowHistory', () => {

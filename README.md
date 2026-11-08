@@ -36,9 +36,9 @@
 | 核心特色 | 技術實現 | 效益說明 |
 | :--- | :--- | :--- |
 | **🌐 Cloudflare 邊緣無伺服器爬蟲** | Cron Trigger + Workers + KV | 每 5 分鐘自動輕量採樣官網，邊緣節點零伺服器維護成本，實現邊緣節點零伺服器維護成本與高可用性。 |
-| **🔮 加權移動平均預測** | 3:2:1 時間加權變化率 | 提取過去 15 分鐘趨勢推算未來動向，人潮湧入時提前調低警戒門檻，避免泳客到場踩雷。 |
+| **🔮 雙軌加權移動平均預測** | 75% 短期 WMA + 25% 常態斜率 | 結合過去 15 分鐘 3:2:1 加權變化率與 4 週同星期常態均線斜率，人潮湧入時提前調低警戒門檻，避免泳客到場踩雷。 |
 | **📈 邊緣常態歷史與時段對齊** | 5 分鐘網格線性插值 | 彙整過去 4 週（28 天）同星期走勢，濾除全天無效日，平滑內插均線並依星期嚴格鎖定泳池開放時段。 |
-| **🤖 現代化 AI 協同開發實踐** | VS Code + Antigravity + GitHub + Cloudflare | 開發者主導架構與邏輯定義，AI 協同加速型別設計、34 項單元測試覆蓋與自動化 CI/CD 部署。 |
+| **🤖 現代化 AI 協同開發實踐** | VS Code + Antigravity + GitHub + Cloudflare | 開發者主導架構與邏輯定義，AI 協同加速型別設計、35 項單元測試覆蓋與自動化 CI/CD 部署。 |
 
 ---
 
@@ -52,8 +52,8 @@ flowchart TD
 
     subgraph CrawlerEngine["邊緣爬蟲引擎 (Cloudflare Worker Cron)"]
         Cron["⏱️ 定時觸發器 (每 5 分鐘一次)"] --> Guard{"⏱️ 營業時段守衛 (台北時間)"}
-        Guard -->|營業時段內| Fetcher["🌐 非同步 HTTP 擷取"]
-        NTU -. 抓取 HTML 頁面 .-> Fetcher
+        Guard -->|"營業時段內"| Fetcher["🌐 非同步 HTTP 擷取"]
+        NTU -. "抓取 HTML 頁面" .-> Fetcher
         Fetcher --> Regex["🕷️ Regex 容錯解析現場人數"]
         Regex --> Sanitizer["🧹 清洗非營業時間資料"]
         Sanitizer --> KV[("💾 Cloudflare KV : ntu_pool")]
@@ -62,14 +62,15 @@ flowchart TD
     subgraph ServiceEngine["邊緣 API 與決策引擎 (Cloudflare Worker Fetch)"]
         KV --> Window["⚡ 滑動視窗截取 28 天活躍時序 (-87% Payload)"]
         Window --> TypCalc["📈 4 週（28 天）常態走勢預先聚合 (5分鐘線性插值)"]
-        Window --> Algo["🔮 3:2:1 加權移動平均預測"]
+        Window --> Algo["🔮 75% 短期 WMA + 25% 常態斜率協同預測"]
+        TypCalc -. "提供 15m 常態斜率" .-> Algo
         Algo --> Threshold["🚦 紅黃綠動態門檻 (Traffic Light)"]
         Threshold --> Routes{"🔀 邊緣路由分流 (src/index.ts)"}
         TypCalc --> Routes
         
-        Routes -->|GET /| Dashboard["🖥️ 互動式視覺化儀表板 (HTML + Chart.js)"]
-        Routes -->|GET /api/data| API["📦 即時人數、趨勢、常態歷史與時序 JSON"]
-        Routes -->|GET /manifest.json| PWA["📱 PWA Web App Manifest"]
+        Routes -->|"GET /"| Dashboard["🖥️ 互動式視覺化儀表板 (HTML + Chart.js)"]
+        Routes -->|"GET /api/data"| API["📦 即時人數、趨勢、常態歷史與時序 JSON"]
+        Routes -->|"GET /manifest.json"| PWA["📱 PWA Web App Manifest"]
     end
 
     subgraph Clients["使用者與客戶端"]
@@ -88,7 +89,7 @@ flowchart TD
 * 📖 **[深入解析 1：加權移動平均人潮預測演算法與 7 水道門檻推導](docs/predictive-crowd-offset.md)**  
   *詳細計算公式、時間軸視窗分解、防止過度敏感與極端調整限制機制，以及尖峰急湧與散場情境驗算。*
 * ⚖️ **[深入解析 2：技術決策紀錄與架構權衡 (Decision Log & Trade-offs)](docs/decision-log.md)**  
-  *收錄爬蟲選型（Regex vs. DOM）、加權移動平均 vs. 機器學習、開館救生員底數扣除、UTC 跨時區防護與 API 封包瘦身。*
+  *收錄爬蟲選型（Regex vs. DOM）、加權移動平均 vs. 機器學習、對齊官方現場人數（不扣除開館工作人員底數）、UTC 跨時區防護與 API 封包瘦身。*
 
 ---
 
