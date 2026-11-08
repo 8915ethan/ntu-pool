@@ -207,5 +207,5 @@ $$\text{Final Offset} = \max(-\text{clampLimit}, \min(\text{clampLimit}, \text{O
 此機制已在專案中完整實作並經過自動化單元測試：
 
 - **核心函式**：[src/utils.ts](../src/utils.ts) 內的 `calculatePredictiveOffset(todayPoints, typicalHistory)`
-- **前端視覺應用**：[src/html.ts](../src/html.ts) 內的動態燈號邏輯
+- **前端視覺應用**：[index.html](../index.html) 內的動態燈號邏輯
 - **單元測試**：[test/utils.test.ts](../test/utils.test.ts) 中的單元測試套件
