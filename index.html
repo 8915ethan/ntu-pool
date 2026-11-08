@@ -125,20 +125,44 @@ function calculatePredictiveOffset(todayPoints) {
   const len = todayPoints.length;
   if (len < 4) return 0;
 
-  const p0  = todayPoints[len - 1].value; 
-  const p5  = todayPoints[len - 2].value; 
-  const p10 = todayPoints[len - 3].value; 
-  const p15 = todayPoints[len - 4].value; 
+  const p0 = todayPoints[len - 1];
+  const p1 = todayPoints[len - 2];
+  const p2 = todayPoints[len - 3];
+  const p3 = todayPoints[len - 4];
 
-  const diff1 = p0 - p5;   
-  const diff2 = p5 - p10;  
-  const diff3 = p10 - p15; 
+  const parseMinutes = (t) => {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  };
 
-  const weightedDelta5m = (diff1 * 3 + diff2 * 2 + diff3 * 1) / 6;
-  const predictedChange20m = weightedDelta5m * 4;
+  const pairs = [[p0, p1], [p1, p2], [p2, p3]];
+  const weights = [3, 2, 1];
+  let weightedRateSum = 0;
+  let weightTotal = 0;
+  let validIntervalCount = 0;
 
-  const offset = -Math.round(predictedChange20m * 0.5); 
-  return Math.max(-8, Math.min(8, offset));
+  for (let i = 0; i < 3; i++) {
+    const [curr, prev] = pairs[i];
+    const dt = parseMinutes(curr.time) - parseMinutes(prev.time);
+    if (dt > 0 && dt <= 25) {
+      const ratePerMinute = (curr.value - prev.value) / dt;
+      weightedRateSum += ratePerMinute * weights[i];
+      weightTotal += weights[i];
+      validIntervalCount++;
+    }
+  }
+
+  if (weightTotal === 0 || validIntervalCount === 0) return 0;
+
+  const weightedRatePerMin = weightedRateSum / weightTotal;
+  const predictedChange15m = weightedRatePerMin * 15;
+
+  const isFullConfidence = validIntervalCount === 3;
+  const damping = isFullConfidence ? 0.7 : 0.5;
+  const clampLimit = isFullConfidence ? 8 : 4;
+
+  const offset = -Math.round(predictedChange15m * damping);
+  return Math.max(-clampLimit, Math.min(clampLimit, offset));
 }
 
 function calculateTrend(todayPoints) {

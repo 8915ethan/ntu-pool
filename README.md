@@ -1,31 +1,33 @@
 # 🏊 NTU PoolFlow 未游先知
-
-> **一句話簡介**：針對官方網站「只有單一時間點、缺乏預測性」的痛點，結合 **Cloudflare 邊緣爬蟲**、**動態時序預測演算法** 與 **紅黃綠動態燈號（Traffic Light）**，提供泳客出發當下最佳前往決策的即時看板。
+### NTU Sports Center Swimming Pool Real-time Monitor & Edge Serverless Engine
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-pool.8915ethan.workers.dev-0d6efd?style=for-the-badge&logo=cloudflare)](https://pool.8915ethan.workers.dev/)
-[![CI](https://github.com/8915ethan/ntu-pool/actions/workflows/ci.yml/badge.svg)](https://github.com/8915ethan/ntu-pool/actions/workflows/ci.yml)
-[![AI-Assisted](https://img.shields.io/badge/AI--Assisted-Pair%20Programming-blueviolet?style=flat-square&logo=openai)](https://github.com/8915ethan/ntu-pool)
+[![CI](https://github.com/8915ethan/pool/actions/workflows/ci.yml/badge.svg)](https://github.com/8915ethan/pool/actions/workflows/ci.yml)
+[![Deploy to Cloudflare Workers](https://github.com/8915ethan/pool/actions/workflows/deploy.yml/badge.svg)](https://github.com/8915ethan/pool/actions/workflows/deploy.yml)
+[![AI-Assisted](https://img.shields.io/badge/AI--Assisted-Pair%20Programming-blueviolet?style=flat-square&logo=openai)](https://github.com/8915ethan/pool)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vitest](https://img.shields.io/badge/Vitest-3.0-FCC72B?logo=vitest&logoColor=black)](https://vitest.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+專為國立臺灣大學綜合體育館溫水游泳池設計的輕量級無伺服器（Serverless）邊緣即時監控、時序預測與決策看板系統。
+
 ---
 
-## 📸 線上展示 (Live Demo & Preview)
+## 🚀 線上即時展示 (Live Demo)
 
 * 🌐 **正式上線網址**：[**https://pool.8915ethan.workers.dev/**](https://pool.8915ethan.workers.dev/)
-* 📱 **介面特色**：RWD 響應式佈局、自動深淺色適應、Chart.js 時序走勢圖，支援「真實資料 (BETA)」與「模擬情境 (DEMO)」一鍵切換。
 
 <p align="center">
-  <img src="docs/dashboard-preview.jpg" alt="NTU PoolFlow Dashboard Preview" width="500" />
+  <img src="docs/dashboard-preview.jpg" alt="NTU PoolFlow Dashboard Preview" width="480" />
 </p>
 
 ---
 
 ## 🎯 核心痛點與解決方案 (The Problem & Solution)
 
-* **傳統盲點**：官方網站**只有單一時間點**的人數數字，使用者無法得知即將變多還是變少，**缺乏可預測性**。泳客常常出發前看到人少，經歷 15~20 分鐘通勤更衣抵達時，現場卻已因人潮湧入而擁擠爆滿。
-* **智慧解法**：除了完整展現**歷史時序資料走勢**，更利用**動態資料即時預測**未來 20 分鐘趨勢，設立不同閾值的**紅黃綠燈號（Traffic Light）**，在人潮急湧時提早亮燈預警，供使用者在當下做出最明智的出行決策。
+* **傳統盲點**：官方網站**只有單一時間點**的人數數字，使用者無法得知即將變多還是變少，**缺乏可預測性**。泳客常常出發前看到人少，經歷約 15 分鐘通勤更衣抵達時，現場卻已因人潮湧入而擁擠爆滿。
+* **智慧解法**：除了完整展現**歷史時序資料走勢**，更利用**動態資料即時預測**未來 15 分鐘趨勢，設立不同閾值的**紅黃綠燈號（Traffic Light）**，在人潮急湧時提早亮燈預警，供使用者在當下做出最明智的出行決策。
 
 ---
 
@@ -34,7 +36,7 @@
 | 核心特色 | 技術實現 | 效益說明 |
 | :--- | :--- | :--- |
 | **🌐 Cloudflare 邊緣無伺服器爬蟲** | Cron Trigger + Workers + KV | 每 5 分鐘自動輕量採樣官網，邊緣節點零伺服器維護成本，實現邊緣節點零伺服器維護成本與高可用性。 |
-| **🔮 動態時序差分演算法預測** | 3:2:1 時間加權變化率 | 提取過去 15 分鐘趨勢推算未來動向，人潮湧入時提前調低警戒門檻，避免泳客到場踩雷。 |
+| **🔮 加權移動平均預測** | 3:2:1 時間加權變化率 | 提取過去 15 分鐘趨勢推算未來動向，人潮湧入時提前調低警戒門檻，避免泳客到場踩雷。 |
 | **📈 邊緣常態歷史與時段對齊** | 5 分鐘網格線性插值 | 彙整過去 4 週（28 天）同星期走勢，濾除全天無效日，平滑內插均線並依星期嚴格鎖定泳池開放時段。 |
 | **🤖 現代化 AI 協同開發實踐** | VS Code + Antigravity + GitHub + Cloudflare | 開發者主導架構與邏輯定義，AI 協同加速型別設計、34 項單元測試覆蓋與自動化 CI/CD 部署。 |
 
@@ -60,12 +62,12 @@ flowchart TD
     subgraph ServiceEngine["邊緣 API 與決策引擎 (Cloudflare Worker Fetch)"]
         KV --> Window["⚡ 滑動視窗截取 28 天活躍時序 (-87% Payload)"]
         Window --> TypCalc["📈 4 週（28 天）常態走勢預先聚合 (5分鐘線性插值)"]
-        Window --> Algo["🔮 3:2:1 動態時序差分預測演算法"]
+        Window --> Algo["🔮 3:2:1 加權移動平均預測"]
         Algo --> Threshold["🚦 紅黃綠動態門檻 (Traffic Light)"]
         Threshold --> Routes{"🔀 邊緣路由分流 (src/index.ts)"}
         TypCalc --> Routes
         
-        Routes -->|GET /| Dashboard["🖥️ 互動式視覺化儀表板 (HTML + Chart.js，預設隱藏 DEMO)"]
+        Routes -->|GET /| Dashboard["🖥️ 互動式視覺化儀表板 (HTML + Chart.js)"]
         Routes -->|GET /api/data| API["📦 即時人數、趨勢、常態歷史與時序 JSON"]
         Routes -->|GET /manifest.json| PWA["📱 PWA Web App Manifest"]
     end
@@ -83,10 +85,10 @@ flowchart TD
 
 詳細公式推導、架構決策與邊界防禦細節已獨立收錄於分頁：
 
-* 📖 **[深入解析 1：動態人潮斜率加權預測演算法與 7 水道門檻推導](docs/predictive-crowd-offset.md)**  
+* 📖 **[深入解析 1：加權移動平均人潮預測演算法與 7 水道門檻推導](docs/predictive-crowd-offset.md)**  
   *詳細計算公式、時間軸視窗分解、防止過度敏感與極端調整限制機制，以及尖峰急湧與散場情境驗算。*
 * ⚖️ **[深入解析 2：技術決策紀錄與架構權衡 (Decision Log & Trade-offs)](docs/decision-log.md)**  
-  *收錄爬蟲選型（Regex vs. DOM）、差分時序 vs. 機器學習、開館救生員底數扣除、UTC 跨時區防護與 API 封包瘦身。*
+  *收錄爬蟲選型（Regex vs. DOM）、加權移動平均 vs. 機器學習、開館救生員底數扣除、UTC 跨時區防護與 API 封包瘦身。*
 
 ---
 
@@ -103,4 +105,4 @@ flowchart TD
 
 ## 📄 授權條款 (License)
 
-本專案採用 [MIT License](LICENSE) 條款開放原始碼。
+本專案採用 [MIT License](LICENSE) 授權。
