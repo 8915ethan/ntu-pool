@@ -84,7 +84,7 @@
   <div class="dashboard-row">
     <div class="hero-left">
       <div class="huge-num" id="curr-count">—</div>
-      <div class="hero-unit">現場淨人數</div>
+      <div class="hero-unit">現場人數</div>
     </div>
     <div class="status-light-box light-grey" id="status-light">
       <div id="light-text">載入中...</div>
@@ -116,7 +116,6 @@
 let chart = null;
 let rawHistoryData = [];
 let currentDisplayMode = 'static';
-let todayBaseline = 0;
 
 // 7 水道容量基準 (快適: 33 人, 擁擠: 42 人)
 const BASE_COMFORTABLE = 33;
@@ -209,8 +208,7 @@ function renderDashboard() {
   const todayPoints = rawHistoryData.filter(p => p.date === todayStr);
   const latest = todayPoints[todayPoints.length - 1] || { value: 39, time: '17:30' };
 
-  todayBaseline = todayPoints[0] ? todayPoints[0].value : 0;
-  const netCount = Math.max(0, latest.value - todayBaseline);
+  const netCount = latest.value;
   const offset = calculatePredictiveOffset(todayPoints);
   const trend = calculateTrend(todayPoints);
 
@@ -236,7 +234,7 @@ function renderDashboard() {
     lightEl.className = "status-light-box light-green";
   }
 
-  document.getElementById('update-time').textContent = `最後更新: ${latest.time} (原始 ${latest.value}人 | 扣除基準 ${todayBaseline}人 | 門檻偏移 ${offset})`;
+  document.getElementById('update-time').textContent = `最後更新: ${latest.time} (現場:${latest.value}人 | 門檻偏移 ${offset})`;
   document.getElementById('chart-title').innerHTML = `7 水道人潮走勢 (舒適門檻 ${amberThreshold}人 · 擁擠門檻 ${redThreshold}人)`;
 
   updateChart(todayPoints);
@@ -247,11 +245,11 @@ function updateChart(todayPoints) {
   // 網頁圖表只從實際開館時間 08:00 開始顯示
   const displayPoints = todayPoints.filter(p => p.time >= '08:00');
   const labels = displayPoints.map(p => p.time);
-  const data = displayPoints.map(p => Math.max(0, p.value - todayBaseline));
+  const data = displayPoints.map(p => p.value);
 
   const datasets = [
     {
-      label: '今日現場淨泳客',
+      label: '今日現場人數',
       data: data,
       borderColor: '#0d6efd',
       borderWidth: 3,
